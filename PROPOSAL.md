@@ -19,7 +19,7 @@ How you will be using the topics covered in class in the project.
 Allocating memory: Storing the actual messages, words for hangman
 Sockets: Connection between server and client, multiple socket connections
 Shared Memory: See what users are connected, allows server to acess everything
-
+Using select to monitor multiple fds at a time (i.e. listening for input from multiple users at the same time)
 
 
 How you are breaking down the project and who is responsible for which parts.
