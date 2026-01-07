@@ -1,6 +1,6 @@
 .PHONY: compile clean server client main
 
-# compile: server client
+compile: server client main
 
 # server: server.o networking.o
 # 	@gcc -o server server.o networking.o
@@ -23,4 +23,3 @@ main: main.c
 clean:
 	rm -f *.o
 	rm -f server client
-
