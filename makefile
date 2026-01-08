@@ -7,10 +7,11 @@ client.o: client.c networking.h
 	@gcc -Wall -c client.c
 
 server.o: server.c networking.h
-	@gcc -Wall -c server.c
+	@gcc -Wall -c server.c -lncurses
 
 networking.o: networking.c networking.h
 	@gcc -Wall -c networking.c
 
 clean:
 	@rm *.o server client
+>>>>>>> 495c66c71d8a1fad5782dd7c1e3ff00dd77f61fd
