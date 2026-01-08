@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .PHONY: compile clean server client main
 
 compile: server client main
@@ -23,3 +24,5 @@ main: main.c
 clean:
 	rm -f *.o
 	rm -f server client
+=======
+>>>>>>> refs/remotes/origin/main

@@ -18,7 +18,8 @@ How you will be using the topics covered in class in the project.
 
 Allocating memory: Storing the actual messages
 Sockets: Connection between server and client, multiple socket connections
-Shared Memory: See what users are connected, allows server to access everything
+Shared Memory: See what users are connected, allows server to acess everything
+Using select: Monitor multiple fds at a time (i.e. listening for input from multiple users at the same time)
 Processes
 Signals: handles keyboard input, like arrow keys
 
