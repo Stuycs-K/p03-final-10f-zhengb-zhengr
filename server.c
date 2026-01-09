@@ -1,39 +1,50 @@
 #include "networking.h"
 
-void subserver_logic(int client_socket){
-  char buffer [BUFFER_SIZE];
 
-  read(client_socket,buffer,sizeof(buffer));
-
-  for(int i = 0; buffer[i] != '\0';i++){
-    if(buffer[i]>= 'a' && buffer[i] <= 'z'){
-      buffer[i] = ((buffer[i] - 'a' + 13) % 26) + 'a';
-    }
-    else if(buffer[i] >= 'A' && buffer[i] <= 'Z'){
-      buffer[i] = (buffer[i] -  'A' + 13) % 26 + 'A';
-    }
-  }
-
-  write(client_socket,buffer,strlen(buffer)+ 1);
-  close(client_socket);
-}
 
 int main(int argc, char *argv[] ) {
   int listen_socket = server_setup();
 
   while(1 == 1){
     int client_socket = server_tcp_handshake(listen_socket);
-    int listen_socket;
+    int listen_socket = server_setup();
     int client_count = 0; //0 clients at the start
     printf("new client connected to server \n");
 
+    while(1 == 1){
+        int max_fd;
+        int ready;
+        int i;
+
+        FD_ZERO(&read_fds);
+
+        FD_SET(listen_socket,&read_fds);
+
+        max_fd = listen_socket;
+        i = 0;
+        while(i < client_count){
+            FD_SET(client_sockets[i],&read_fds);
+
+            if(client_sockets[i] > max_fd){
+                max_fd =client_sockets[i];
+            }
+        }
+        i += 1;
+    }
+
+    ready = select(max_fd + 1,&read_fds,NULL,NULL,NULL);
+
+    if(FD_ISSET(listen_socket,&read_fds)){
+        int other_client;
+
+        other_client = server_tcp_handshake(listen_socket);
+
+        if(client_count < MAX)
+    }
 
 
-  if(fork() == 0){
-    close(listen_socket);
-    subserver_logic(client_socket);
-    exit(0);
-  }
+
+  
 
   }
 
