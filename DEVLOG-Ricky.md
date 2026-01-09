@@ -10,3 +10,7 @@ learning ncurses (40 min)
 
 ### 2026-01-07 - Brief description
 Expanded description including how much time was spent on task.
+
+### 2026-01-08 - Brief description
+
+started server.c logic , somewhere in the middle  + networking.c(2 hour)
