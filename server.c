@@ -2,55 +2,61 @@
 #include "networking.h"
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/smh.h>
-#include <sys/ipc.h>
 #include <sys/types.h>
+#include <sys/select.h>
 
-#define SHARED_MEM_KEY "13723"
 int main() {
-    char[1025] most_recent_message = "";
-    int shmid;
-
-    shmid = shmget(SHARED_MEM_KEY, sizeof(most_recent_message), IPC_CREAT | 0640);
-    most_recent_message = shmat(shmid, 0, 0);
-
-
-    int listen_socket; int client_socket;
-
-    fd_set read_fds;
+    int listen_socket;
     listen_socket = server_setup();
 
-    char buff[1025];
+
+    fd_set read_fds;
+    int client_fds[10];
+    int num_clients = 0;
+    int max_fd = listen_socket;
+
+
 
     while(1) {
       FD_ZERO(&read_fds);
-
       FD_SET(listen_socket, &read_fds);
-      FD_SET(STDIN_FILENO, &read_fds);
-
-      int i = select(listen_socket+1, &read_fds, NULL, NULL, NULL);
-
-      if (FD_ISSET(STDIN_FILENO, &read_fds)) {
-        int bytes = fgets(buff, sizeof(buff), stdin);
-        err(bytes, "read from stdin");
-        buff[strlen(buff)-1] = 0;
-      }
+     
+      int can_read = select(max_fd+1, &read_fds, NULL, NULL, NULL);
+      err(can_read, "select error");
 
       if (FD_ISSET(listen_socket, &read_fds)) {
-        client_socket = server_tcp_handshake(listen_socket);
+        int client_socket = server_tcp_handshake(listen_socket);
+        FD_SET(client_socket, &read_fds);
 
-        int bytes = read(client_socket, buf, sizeof(buff));
-        err(bytes, "read from cient");
+        max_fd = max(max_fd, client_socket);
+        client_fds[num_clients++] = client_socket;
+      }
+
+      for (int i = 0; i < num_clients; i++) {
+        if (FD_ISSET(client_fds[i], &read_fds)) {
+          char buf[1025];
+          int client_socket = client_fds[i];
+          int bytes = read(client_socket, buf, sizeof(buf));
+          buf[sizeof(buf) - 1] = '\0';
+
+          if (bytes == 0) {
+            // close client socket
+            // remove client from client_fds
+          }
+
+          else {
+            for (int j = 0; j < num_clients; j++) {
+              if (j != i) write(client_fds[j], buf, bytes);
+            }
+          }
 
 
-
-
-
-
-
-
+        }
 
       }
+
+      
+      
     }
 
 
