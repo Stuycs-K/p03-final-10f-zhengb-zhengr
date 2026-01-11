@@ -127,28 +127,52 @@
 
 
         if (FD_ISSET(STDIN_FILENO, &read_fds)) {
-          if (fgets(buf, sizeof(buf), stdin) == NULL) break;
-          buf[strlen(buf) - 1] = '\0';
 
+          int key = getch();
 
-          char new_msg[FULL_MSG_SIZE];
+          if(key == KEY_BACKSPACE || key = 127){
+            if(input_LEN > 0){
+                input_LEN--;
+                input[input_LEN] = "\0";
+            }
+          }
 
-          time_t raw_time;
-          time(&raw_time);
+          else if(key == "\n"){
+            if(input_LEN > 0){
+                char new_msg[FULL_MSG_SIZE];
+                
 
-          struct tm * local_time = localtime(&raw_time);
+                time_t raw_time;
+                time(&raw_time);
 
-          char time[8];
-          strftime(time, sizeof(time), "%I:%M%p", local_time);
-          time[sizeof(time) - 1] = '\0';
+                struct tm * local_time = localtime(&raw_time);
 
-          snprintf(new_msg, sizeof(new_msg), "%s: %s (%s)\n", username, buf, time);
+                char time[8];
+                strftime(time, sizeof(time), "%I:%M%p", local_time);
 
-          int bytes = write(server_socket, new_msg, strlen(new_msg));
-          err(bytes, "write message to server");
+                snprintf(new_msg, sizeof(new_msg), "%s: %s (%s)\n", username, buf, time);
 
-          // printf("WRITE!\n");
+                int bytes = write(server_socket, new_msg, strlen(new_msg));
+                err(bytes, "write message to server");
 
+                input_LEN = 0;
+                input[0] = "\0";
+            }
+          }
+          
+          else if(key >= 32 && key <= 126){//if its a n actual letter add to end
+            if(input_LEN < 1024){
+                input[input_LEN] = char(key);
+                input_LEN ++;
+                input[input_LEN] = "\0";
+            }
+          }
+
+          werase(input_WIN);
+          box(input_WIN,0,0);
+          mvwprintw(input_WIN,0,2,"Input ");
+          mvwprintw(input_WIN,1,1,"| %s",input);
+          wrefresh(input_WIN);
 
 
         }
@@ -156,6 +180,8 @@
       }
 
       close(server_socket);
+      endwin();
+      return 0;
 
 
 
