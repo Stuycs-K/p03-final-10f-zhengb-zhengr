@@ -22,7 +22,7 @@
       int num_messages = 0;
       char username[33];
 
-      mvprintw(0,0,"Enter your Username: ");
+      mvwprintw(0,0,"Enter your Username: ");
       echo();
       getnstr(username,32);//so they have ttheir actual username
 
@@ -63,10 +63,25 @@
       intput[0] = "\0";
 
 
+      werase(users_WIN);
+      box(users_WIN,0,0);
+      mvwprintw(users_WIN,0,2,"Users ");
+      wrefresh(users_WIN);
 
-      fd_set read_fds;
+      werase(chat_WIN);
+      box(chat_WIN,0,0);
+      mvwprintw(chat_WIN,0,2,"Chat ");
+      wrefresh(chat_WIN);
+
+      werase(input_WIN);
+      box(input_WIN,0,0);
+      mvwprintw(input_WIN,0,2,"Input ");
+      wrefresh(input_WIN);
+
+
 
       while (1) {
+        fd_set read_fds;
         FD_ZERO(&read_fds);
 
         FD_SET(STDIN_FILENO, &read_fds);
@@ -87,14 +102,29 @@
 
           strcpy(messages[num_messages], msg);
           num_messages++;
+            
+          if(bytes > 0){
+            buf[bytes] = "\0";
+          
 
-          // loop through all the messages, update ncurses
-          printf("\nCurrent messages:\n");
-          for (int i = 0; i < num_messages; i++) {
-            printf("%s", messages[i]);
+          if(num_messages < msg_MAX){
+            strcpy(messages[num_messages],buf);
+            num_messages++;
           }
-          printf("\n"); 
+
+          werase(chat_WIN);
+          box(chat_WIN,0,0);
+          mvwprintw(chat_WIN,0,2,"Chat ");
+          // loop through all the messages, update ncurses
+         
+          for(int i = 0; i < num_messages && i < top_h - 2; i ++){
+            mvwprintw(chat_WIN,i + 1, 1,messages[i]);
+          }
+          wrefresh(chat_WIN);
         }
+    }
+
+
 
         if (FD_ISSET(STDIN_FILENO, &read_fds)) {
           if (fgets(buf, sizeof(buf), stdin) == NULL) break;
