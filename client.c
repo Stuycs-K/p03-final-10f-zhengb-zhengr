@@ -32,9 +32,38 @@
 
       clear();
 
-     
 
       int server_socket = client_tcp_handshake("127.0.0.1");
+
+      int screen_h;
+      int screen_w;
+
+      getmaxyx(stdscr,screen_h,screen_w);
+
+      int input_h = 3;
+      int top_h = screen_h - input_h;//rest of the space goes to chat + userlist
+
+
+      int users_W = 20;
+      int chat_w = screen_w - users_w;//rest of this space goes to chat
+
+      WINDOW * users_WIN = newwin(top_h,users_w,0,0);
+
+      WINDOW * chat_WIN = newwin(top_h,chat_w,0,users_w);
+
+      WINDOW * input_WIN = newwin(input_h,screen_w,top_h,0);
+
+      char user_LIST[50][33];
+
+      char input[1024];
+      int input_LEN = 0;
+      int scroll_CHAT = 0;
+      int scroll_USER = 0;
+
+      intput[0] = "\0";
+
+
+
       fd_set read_fds;
 
       while (1) {
