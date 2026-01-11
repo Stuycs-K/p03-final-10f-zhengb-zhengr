@@ -21,7 +21,7 @@
 
 
 
-      char messages[100][FULL_MSG_SIZE];
+      char messages[100][1024];
       int num_messages = 0;
       char username[33];
 
@@ -95,7 +95,7 @@
 
         
         if (FD_ISSET(server_socket, &read_fds)) {
-          char msg[FULL_MSG_SIZE];
+          char msg[1024];
 
           int bytes = read(server_socket, msg, sizeof(msg) - 1);
           err(bytes, "read message from server");
@@ -135,7 +135,7 @@
 
           else if(key == '\n'){
             if(input_LEN > 0){
-                char new_msg[FULL_MSG_SIZE];
+                char new_msg[1024];
                 
 
                 time_t raw_time;

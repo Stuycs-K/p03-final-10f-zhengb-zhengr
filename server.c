@@ -48,7 +48,7 @@ int main() {
         if (FD_ISSET(client_fds[i], &read_fds)) {
           // printf("SERVER READ\n");  
 
-          char msg[FULL_MSG_SIZE];
+          char msg[1024];
           int client_socket = client_fds[i];
           int bytes = read(client_socket, msg, sizeof(msg));
 
