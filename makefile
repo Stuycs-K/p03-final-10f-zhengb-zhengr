@@ -12,8 +12,8 @@ server.o: server.c networking.h
 networking.o: networking.c networking.h
 	@gcc -Wall -c networking.c
 server:
-	./server
+	@./server
 client:
-	./client
+	@./client
 clean:
 	@rm *.o server client
