@@ -28,6 +28,10 @@ int main() {
     while(1) {
       FD_ZERO(&read_fds);
       FD_SET(listen_socket, &read_fds);
+
+      for (int i = 0; i < num_clients; i++) {
+        FD_SET(client_fds[i], &read_fds);
+      }
      
       int can_read = select(max_fd+1, &read_fds, NULL, NULL, NULL);
       err(can_read, "select error");
@@ -42,18 +46,21 @@ int main() {
 
       for (int i = 0; i < num_clients; i++) {
         if (FD_ISSET(client_fds[i], &read_fds)) {
-          struct message msg;
+          // printf("SERVER READ\n");  
+
+          char msg[FULL_MSG_SIZE];
           int client_socket = client_fds[i];
-          int bytes = read(client_socket, &msg, sizeof(msg));
+          int bytes = read(client_socket, msg, sizeof(msg));
 
           if (bytes == 0) {
+            printf("client closed");
             // close client socket
             // remove client from client_fds
           }
 
           else {
             for (int j = 0; j < num_clients; j++) {
-              if (j != i) write(client_fds[j], &msg, bytes);
+              write(client_fds[j], msg, bytes);
             }
           }
 

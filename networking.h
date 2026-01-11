@@ -16,6 +16,7 @@
 #define NETWORKING_H
 #define PORT "35307"
 #define BUFFER_SIZE 1024
+#define FULL_MSG_SIZE 1070
 void err(int i, char*message);
 int server_setup();
 int client_tcp_handshake(char*server_address);
