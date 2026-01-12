@@ -13,17 +13,24 @@
 
 
 
-    int main() {
+    int main(int argc, char * argv[]) {
+      char * IP = "127.0.0.1";
+
+      if (argc == 2) {
+        IP = argv[1];
+      }
+
+
       initscr();
       cbreak();
       noecho();
       keypad(stdscr,TRUE);//this is for keys liie the up arrow and down arror
 
 
-
       char messages[100][1024];
       int num_messages = 0;
       char username[33];
+
 
       mvprintw(0,0,"Enter your Username: ");
       echo();
@@ -37,7 +44,7 @@
       clear();
 
 
-      int server_socket = client_tcp_handshake("127.0.0.1");
+      int server_socket = client_tcp_handshake(IP);
 
       int screen_h;
       int screen_w;
@@ -93,7 +100,7 @@
 
         select(server_socket + 1, &read_fds, NULL, NULL, NULL);
 
-        
+
         if (FD_ISSET(server_socket, &read_fds)) {
           char msg[1024];
 
@@ -112,7 +119,7 @@
             box(chat_WIN,0,0);
             mvwprintw(chat_WIN,0,2,"Chat ");
             // loop through all the messages, update ncurses
-           
+
             for(int i = 0; i < num_messages && i < top_h - 2; i ++){
               mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
             }
@@ -136,7 +143,7 @@
           else if(key == '\n'){
             if(input_LEN > 0){
                 char new_msg[1024];
-                
+
 
                 time_t raw_time;
                 time(&raw_time);
@@ -155,7 +162,7 @@
                 input[0] = '\0';
             }
           }
-          
+
           else if(key >= 32 && key <= 126){//if its a n actual letter add to end
             if(input_LEN < 1024){
                 input[input_LEN] = (char)key;
