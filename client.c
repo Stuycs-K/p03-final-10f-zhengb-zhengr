@@ -7,11 +7,6 @@
     #include <stdio.h>
 
 
-    #define msg_MAX 100
-    #define usr_MAX 50
-
-
-
 
     int main(int argc, char * argv[]) {
       char * IP = "127.0.0.1";
@@ -27,7 +22,7 @@
       keypad(stdscr,TRUE);//this is for keys liie the up arrow and down arror
 
 
-      char messages[100][1024];
+      char messages[MAX_MSGS][MAX_MSG_SIZE];
       int num_messages = 0;
       char username[33];
 
@@ -35,6 +30,7 @@
       mvprintw(0,0,"Enter your Username: ");
       echo();
       getnstr(username,32);//so they have ttheir actual username
+      username[strlen(username) - 1] = '\0';
       noecho();
 
       if(username[0] == '\0'){
@@ -102,15 +98,15 @@
 
 
         if (FD_ISSET(server_socket, &read_fds)) {
-          char msg[1024];
+          char msg[MAX_MSG_SIZE];
 
-          int bytes = read(server_socket, msg, sizeof(msg) - 1);
+          int bytes = read(server_socket, msg, sizeof(msg));
           err(bytes, "read message from server");
 
           if(bytes > 0){
             msg[bytes] = '\0';
 
-            if(num_messages < msg_MAX){
+            if(num_messages < MAX_MSGS){
               strcpy(messages[num_messages], msg);
               num_messages++;
             }
@@ -142,7 +138,7 @@
 
           else if(key == '\n'){
             if(input_LEN > 0){
-                char new_msg[1024];
+                char new_msg[MAX_MSG_SIZE];
 
 
                 time_t raw_time;
