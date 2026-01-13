@@ -29,8 +29,7 @@
 
       mvprintw(0,0,"Enter your Username: ");
       echo();
-      getnstr(username,32);//so they have ttheir actual username
-      username[strlen(username) - 1] = '\0';
+      getnstr(username, sizeof(username) - 1);//so they have ttheir actual username
       noecho();
 
       if(username[0] == '\0'){

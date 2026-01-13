@@ -22,12 +22,6 @@ networking.o: networking.c networking.h
 main: main.c
 	@gcc -Wall main.c -lncurses -o main
 
-networking.o: networking.c networking.h
-	@gcc -Wall -c networking.c
-server:
-	@./server
-client:
-	@./client
 clean:
 	@rm -f *.o
 	@rm -f server client
