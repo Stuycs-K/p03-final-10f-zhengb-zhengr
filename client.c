@@ -25,12 +25,12 @@
 
       char messages[MAX_MSGS][MAX_MSG_SIZE];
       int num_messages = 0;
-      char username[33];
+      char username[33] = "1";
 
 
       mvprintw(0,0,"Enter your Username: ");
       echo();
-      getnstr(username, sizeof(username) - 1);//so they have ttheir actual username
+      // getnstr(username, sizeof(username) - 1);//so they have ttheir actual username
       noecho();
 
       if(username[0] == '\0'){
@@ -138,6 +138,7 @@
 
           else if(key == '\n'){
             if(input_LEN > 0){
+
                 char new_msg[MAX_MSG_SIZE];
 
 
@@ -151,6 +152,9 @@
 
                 snprintf(new_msg, sizeof(new_msg), "%s: %s (%s)\n", username, input, time);
 
+                printf("trying to send message!\n");
+                exit(0);
+                
                 int bytes = write(server_socket, new_msg, strlen(new_msg));
                 err(bytes, "write message to server");
 

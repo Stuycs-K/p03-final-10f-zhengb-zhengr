@@ -39,13 +39,19 @@ int main() {
 
       for (int i = 0; i < num_clients; i++) { // one issue with this is that earlier clients will have read priority
         // probably causes the issue of the later clients not having their messages displayed until the first client sends a message
-
+        printf("%d\n", i);
         if (FD_ISSET(client_fds[i], &read_fds)) {
-          // printf("SERVER READ\n");  
+          printf("SERVER READ\n");
+          
 
           char msg[MAX_MSG_SIZE];
           int client_socket = client_fds[i];
+
           int bytes = read(client_socket, msg, sizeof(msg));
+
+
+
+          printf("%d\n", bytes);
 
           if (bytes == 0) {
             printf("client closed\n");
