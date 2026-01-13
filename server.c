@@ -6,12 +6,6 @@
 #include <sys/select.h>
 
 
-struct message {
-  char msg[1025];
-  char username[33];
-  char time[8];
-};
-
 
 int main() {
     int listen_socket;
@@ -32,7 +26,6 @@ int main() {
       for (int i = 0; i < num_clients; i++) {
         FD_SET(client_fds[i], &read_fds);
       }
-     
       int can_read = select(max_fd+1, &read_fds, NULL, NULL, NULL);
       err(can_read, "select error");
 
@@ -48,7 +41,7 @@ int main() {
         if (FD_ISSET(client_fds[i], &read_fds)) {
           // printf("SERVER READ\n");  
 
-          char msg[FULL_MSG_SIZE];
+          char msg[MAX_MSG_SIZE];
           int client_socket = client_fds[i];
           int bytes = read(client_socket, msg, sizeof(msg));
 
@@ -69,8 +62,8 @@ int main() {
 
       }
 
-      
-      
+
+
     }
 
 
