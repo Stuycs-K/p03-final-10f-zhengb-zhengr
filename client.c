@@ -99,10 +99,12 @@
 
         if (FD_ISSET(server_socket, &read_fds)) {
           char msg[MAX_MSG_SIZE];
+          char username[MAX_MSG_SIZE];
 
           int bytes = read(server_socket, msg, sizeof(msg));
           err(bytes, "read message from server");
 
+          int userBytes = read(server_socket,username,sizeof(username));
           if(bytes > 0){
             msg[bytes] = '\0';
 
@@ -111,15 +113,31 @@
               num_messages++;
             }
 
+            if(userBytes < 0){
+              username[userBytes] = '\0';
+            }
+            int u = 0;
+            if(u < 50){
+              strcpy(user_LIST[u],username);
+            }
             werase(chat_WIN);
             box(chat_WIN,0,0);
             mvwprintw(chat_WIN,0,2,"Chat ");
             // loop through all the messages, update ncurses
 
+            werase(users_WIN);
+            box(users_WIN,0,0);
+            mvwprintw(users_WIN,0,2,"User List ");
+
             for(int i = 0; i < num_messages && i < top_h - 2; i ++){
               mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
             }
+
+            for(int i = 0; i < 50 && i < top_h -2; i ++){
+              mvwprintw(users_WIN,i + 1,1,"%s",user_LIST[i]);
+            }
             wrefresh(chat_WIN);
+            wrefresh(users_WIN);
           }
         }
 
@@ -139,6 +157,7 @@
           else if(key == '\n'){
             if(input_LEN > 0){
                 char new_msg[MAX_MSG_SIZE];
+                char new_user[MAX_MSG_SIZE];
 
 
                 time_t raw_time;
@@ -150,8 +169,10 @@
                 strftime(time, sizeof(time), "%I:%M%p", local_time);
 
                 snprintf(new_msg, sizeof(new_msg), "%s: %s (%s)\n", username, input, time);
+                snprintf(new_user,sizeof(new_user),"%s\n",username);
 
                 int bytes = write(server_socket, new_msg, strlen(new_msg));
+                int userBytes = write(server_socket,new_user,strlen(new_user));
                 err(bytes, "write message to server");
 
                 input_LEN = 0;
@@ -175,14 +196,13 @@
 
           werase(users_WIN);
           box(users_WIN,0,0);
-          mvwprintw(input_WIN,0,2,"User List ");
-          mvwprintw(input_WIN,1,1,"%s",user_LIST);
-          wrefresh(input_WIN);
+          mvwprintw(users_WIN,0,2,"User List ");
+          wrefresh(users_WIN);
 
         }
 
       }
-
+      echo();
       close(server_socket);
       endwin();
       return 0;
