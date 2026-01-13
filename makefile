@@ -1,12 +1,14 @@
 .PHONY: compile clean server client main
 
-compile: server client main
-
-server: server.o networking.o
+compile: server.o client.o networking.o
 	@gcc -o server server.o networking.o
-
-client: client.o networking.o
 	@gcc -o client client.o networking.o -lncurses
+
+server:
+	@./server
+
+client:
+	@./client $(ARGS)
 
 server.o: server.c networking.h
 	@gcc -Wall -c server.c
@@ -21,5 +23,5 @@ main: main.c
 	@gcc -Wall main.c -lncurses -o main
 
 clean:
-	rm -f *.o
-	rm -f server client
+	@rm -f *.o
+	@rm -f server client

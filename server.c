@@ -6,12 +6,6 @@
 #include <sys/select.h>
 
 
-struct message {
-  char msg[1025];
-  char username[33];
-  char time[8];
-};
-
 
 int main() {
     int listen_socket;
@@ -32,7 +26,6 @@ int main() {
       for (int i = 0; i < num_clients; i++) {
         FD_SET(client_fds[i], &read_fds);
       }
-     
       int can_read = select(max_fd+1, &read_fds, NULL, NULL, NULL);
       err(can_read, "select error");
 
@@ -44,18 +37,25 @@ int main() {
         client_fds[num_clients++] = client_socket;
       }
 
-      for (int i = 0; i < num_clients; i++) {
+      for (int i = 0; i < num_clients; i++) { // one issue with this is that earlier clients will have read priority
+        // probably causes the issue of the later clients not having their messages displayed until the first client sends a message
+
         if (FD_ISSET(client_fds[i], &read_fds)) {
           // printf("SERVER READ\n");  
 
-          char msg[1024];
+          char msg[MAX_MSG_SIZE];
           int client_socket = client_fds[i];
           int bytes = read(client_socket, msg, sizeof(msg));
 
           if (bytes == 0) {
-            printf("client closed");
-            // close client socket
+            printf("client closed\n");
+            close(client_socket);
+
             // remove client from client_fds
+            for (int j = i; j < num_clients-1; j++) {
+              client_fds[j] = client_fds[j+1];
+            }
+            num_clients--;
           }
 
           else {
@@ -69,9 +69,11 @@ int main() {
 
       }
 
-      
-      
+
+
     }
+
+    close(listen_socket);
 
 
 
