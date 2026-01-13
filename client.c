@@ -1,10 +1,11 @@
-#include "networking.h"
+
     #include <sys/select.h>
     #include <time.h>
     #include <ncurses.h>
     #include <unistd.h>
     #include <string.h>
     #include <stdio.h>
+    #include "networking.h"
 
 
     #define msg_MAX 100
@@ -93,7 +94,7 @@
 
         select(server_socket + 1, &read_fds, NULL, NULL, NULL);
 
-        
+
         if (FD_ISSET(server_socket, &read_fds)) {
           char msg[1024];
 
@@ -112,7 +113,7 @@
             box(chat_WIN,0,0);
             mvwprintw(chat_WIN,0,2,"Chat ");
             // loop through all the messages, update ncurses
-           
+
             for(int i = 0; i < num_messages && i < top_h - 2; i ++){
               mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
             }
@@ -136,7 +137,7 @@
           else if(key == '\n'){
             if(input_LEN > 0){
                 char new_msg[1024];
-                
+
 
                 time_t raw_time;
                 time(&raw_time);
@@ -155,7 +156,7 @@
                 input[0] = '\0';
             }
           }
-          
+
           else if(key >= 32 && key <= 126){//if its a n actual letter add to end
             if(input_LEN < 1024){
                 input[input_LEN] = (char)key;
@@ -170,6 +171,11 @@
           mvwprintw(input_WIN,1,1,"| %s",input);
           wrefresh(input_WIN);
 
+          werase(users_WIN);
+          box(users_WIN,0,0);
+          mvwprintw(input_WIN,0,2,"User List ");
+          mvwprintw(input_WIN,1,1,"%s",user_LIST);
+          wrefresh(input_WIN);
 
         }
 
