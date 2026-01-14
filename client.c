@@ -7,7 +7,13 @@
     #include <stdio.h>
     #include "networking.h"
 
-
+    static void sighandler(int signo) {
+      if (signo == SIGINT) {
+        close(server_socket);
+        echo();
+        exit(0);
+      }
+    }
 
     int main(int argc, char * argv[]) {
       char * IP = "127.0.0.1";
@@ -41,6 +47,8 @@
 
 
       int server_socket = client_tcp_handshake(IP);
+
+      signal(SIGINT, sighandler)
 
       int screen_h;
       int screen_w;
