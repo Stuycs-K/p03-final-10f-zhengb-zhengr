@@ -1,4 +1,3 @@
-
     #include <sys/select.h>
     #include <time.h>
     #include <ncurses.h>
@@ -108,7 +107,7 @@
         if (FD_ISSET(server_socket, &read_fds)) {
           char msg[MAX_MSG_SIZE];
 
-          int bytes = read(server_socket, msg, sizeof(msg));
+          int bytes = read(server_socket, msg, sizeof(msg) - 1);
           err(bytes, "read message from server");
 
           if(bytes > 0){
@@ -183,17 +182,17 @@
 
           werase(users_WIN);
           box(users_WIN,0,0);
-          mvwprintw(input_WIN,0,2,"User List ");
+          mvwprintw(users_WIN,0,2,"User List ");
 
           for(int i =0;i < num_users && i < top_h -2; i ++){
-            mvwprintw(users_WIN,1 + i,"%s",user_LIST[i]);
+            mvwprintw(users_WIN,1 + i,1,"%s",user_LIST[i]);
+          }
 
+          wrefresh(users_WIN);
 
         }
-          wrefresh(input_WIN);
 
       }
-    }
 
       close(server_socket);
       endwin();
