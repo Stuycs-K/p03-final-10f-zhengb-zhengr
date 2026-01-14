@@ -17,7 +17,7 @@ client.o: client.c networking.h
 	@gcc -Wall -c client.c
 
 networking.o: networking.c networking.h
-	@gcc -Wall -c networking.c
+	@gcc -Wall -c networking.c -lncurses
 
 main: main.c
 	@gcc -Wall main.c -lncurses -o main
