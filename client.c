@@ -119,7 +119,7 @@ int main(int argc, char * argv[]) {
         endwin();
         printf("Server disconnected.\n");
         close(server_socket);
-        exit(0);  
+        exit(0);
       }
 
       msg[bytes] = '\0';
@@ -153,7 +153,7 @@ int main(int argc, char * argv[]) {
         }
       }
 
-      else if(key == '\n'){
+      if(key == '\n'){
         if(input_LEN > 0){
 
             char new_msg[MAX_MSG_SIZE];
@@ -177,12 +177,18 @@ int main(int argc, char * argv[]) {
         }
       }
 
-      else if(key >= 32 && key <= 126){//if its a n actual letter add to end
+      if(key >= 32 && key <= 126){//if its a n actual letter add to end
         if(input_LEN < 1024){
             input[input_LEN] = (char)key;
             input_LEN ++;
             input[input_LEN] = '\0';
         }
+      }
+
+      if (key == KEY_LEFT && input_LEN > 0) {
+        int cur_x; int cur_y;
+        getyx(stdscr, cur_y, cur_x);
+        move(cur_y, cur_x-1);
       }
 
       werase(input_WIN);
@@ -191,11 +197,11 @@ int main(int argc, char * argv[]) {
       mvwprintw(input_WIN,1,1,"| %s",input);
       wrefresh(input_WIN);
 
-      werase(users_WIN);
-      box(users_WIN,0,0);
-      mvwprintw(input_WIN,0,2,"User List ");
-      mvwprintw(input_WIN,1,1,"%s",user_LIST);
-      wrefresh(input_WIN);
+      // werase(users_WIN);
+      // box(users_WIN,0,0);
+      // mvwprintw(input_WIN,0,2,"User List ");
+      // mvwprintw(input_WIN,1,1,"%s",user_LIST);
+      // wrefresh(input_WIN);
 
     }
 
