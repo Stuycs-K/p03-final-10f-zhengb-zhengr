@@ -6,6 +6,11 @@
 #include <sys/select.h>
 
 
+int listen_socket;
+int num_clients = 0;
+int client_fds[10];
+
+
 static void sighandler(int signo) {
   if (signo == SIGINT) {
     close(listen_socket);
@@ -17,18 +22,15 @@ static void sighandler(int signo) {
 }
 
 
-
 int main() {
-    int listen_socket;
+    signal(SIGINT, sighandler);
+
     listen_socket = server_setup();
 
 
     fd_set read_fds;
-    int client_fds[10];
-    int num_clients = 0;
     int max_fd = listen_socket;
 
-    signal(SIGINT, sighandler);
 
     int first = 1;
 
