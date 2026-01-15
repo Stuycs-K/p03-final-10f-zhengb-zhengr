@@ -65,6 +65,11 @@
 
       WINDOW * input_WIN = newwin(input_h,screen_w,top_h,0);
 
+      idlok(chat_WIN,TRUE);
+      scrollok(chat_WIN,TRUE);
+      setscrreg(0,top_h);
+
+
       char user_LIST[50][33];
       int num_users = 0;
 
@@ -192,6 +197,8 @@
               werase(chat_WIN);
               box(chat_WIN,0,0);
               mvwprintw(chat_WIN,0,2,"Chat ");
+              idlok(chat_WIN,TRUE);
+              scrollok(chat_WIN,TRUE);
               // loop through all the messages, update ncurses
 
               for(int i = 0; i < num_messages && i < top_h - 2; i ++){
