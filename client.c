@@ -6,7 +6,15 @@
 #include <stdio.h>
 #include "networking.h"
 
+int server_socket;
 
+static void sighandler(int signo) {
+  if (signo == SIGINT) {
+    close(server_socket);
+    endwin();
+    exit(0);
+  }
+}
 
 int main(int argc, char * argv[]) {
   char * IP = "127.0.0.1";
@@ -14,6 +22,9 @@ int main(int argc, char * argv[]) {
   if (argc == 2) {
     IP = argv[1];
   }
+
+  signal(SIGINT, sighandler);
+
 
 
   initscr();
@@ -29,7 +40,7 @@ int main(int argc, char * argv[]) {
 
   mvprintw(0,0,"Enter your Username: ");
   echo();
-  getnstr(username, sizeof(username) - 1);//so they have ttheir actual username
+  getnstr(username, sizeof(username));//so they have ttheir actual username
   noecho();
 
   if(username[0] == '\0'){
@@ -39,13 +50,11 @@ int main(int argc, char * argv[]) {
   clear();
 
 
-  int server_socket = client_tcp_handshake(IP);
+  server_socket = client_tcp_handshake(IP);
 
-  {
-    char join_msg[MAX_MSG_SIZE];
-    snprintf(join_msg, sizeof(join_msg), "__JOIN__:%s\n", username);
-    write(server_socket, join_msg, strlen(join_msg));
-  }
+  char join_msg[MAX_MSG_SIZE];
+  snprintf(join_msg, sizeof(join_msg), "__JOIN__:%s\n", username);
+  write(server_socket, join_msg, strlen(join_msg));
 
   int screen_h;
   int screen_w;
@@ -65,6 +74,11 @@ int main(int argc, char * argv[]) {
 
   WINDOW * input_WIN = newwin(input_h,screen_w,top_h,0);
 
+  idlok(chat_WIN,TRUE);
+  scrollok(chat_WIN,TRUE);
+  setscrreg(0,top_h);
+
+
   char user_LIST[50][33];
   int num_users = 0;
 
@@ -77,13 +91,16 @@ int main(int argc, char * argv[]) {
     user_LIST[i][0] = '\0';
   }
 
-  strcpy(user_LIST[0],username);
+  strcpy(user_LIST[0], username);
   num_users += 1;
 
 
   werase(users_WIN);
   box(users_WIN,0,0);
   mvwprintw(users_WIN,0,2,"Users ");
+  for(int i =0;i < num_users && i < top_h -2; i ++){
+    mvwprintw(users_WIN,1 + i,1,"%s",user_LIST[i]);
+  }
   wrefresh(users_WIN);
 
   werase(chat_WIN);
@@ -111,126 +128,137 @@ int main(int argc, char * argv[]) {
     if (FD_ISSET(server_socket, &read_fds)) {
       char msg[MAX_MSG_SIZE];
 
-      int bytes = read(server_socket, msg, sizeof(msg) - 1);
+      int bytes = read(server_socket, msg, sizeof(msg));
       err(bytes, "read message from server");
 
-      if(bytes > 0){
-        msg[bytes] = '\0';
+      if (bytes == 0) {
+        endwin();
+        printf("Server disconnected.\n");
+        close(server_socket);
+        exit(0);
+      }
 
-        if (strncmp(msg,"__JOIN__:",9) == 0) {
-          char temp[33];
-          int k = 0;
+      msg[bytes] = '\0';
 
-          while (k < 32 && msg[9 + k] != '\0' && msg[9 + k] != '\n') {
-            temp[k] = msg[9 + k];
-            k++;
+      if (strncmp(msg,"__JOIN__:",9) == 0) {
+        char temp[33];
+        int k = 0;
+
+        while (k < 32 && msg[9 + k] != '\0' && msg[9 + k] != '\n') {
+          temp[k] = msg[9 + k];
+          k++;
+        }
+        temp[k] = '\0';
+
+        int exists = 0;
+        for(int i = 0; i < num_users; i++){
+          if(strcmp(user_LIST[i], temp) == 0){
+            exists = 1;
           }
-          temp[k] = '\0';
-
-          int exists = 0;
-          for(int i = 0; i < num_users; i++){
-            if(strcmp(user_LIST[i], temp) == 0){
-              exists = 1;
-            }
-          }
-
-          if(exists == 0){
-            if(num_users < 50){
-              strcpy(user_LIST[num_users], temp);
-              num_users++;
-            }
-          }
-
-          if(num_messages < MAX_MSGS){
-            strcpy(messages[num_messages], msg);
-            num_messages++;
-          }
-
-          werase(users_WIN);
-          box(users_WIN,0,0);
-          mvwprintw(users_WIN,0,2,"User List ");
-
-          for(int i =0;i < num_users && i < top_h -2; i ++){
-            mvwprintw(users_WIN,1 + i,1,"%s",user_LIST[i]);
-          }
-
-          wrefresh(users_WIN);
-
-          werase(chat_WIN);
-          box(chat_WIN,0,0);
-          mvwprintw(chat_WIN,0,2,"Chat ");
-
-          for(int i = 0; i < num_messages && i < top_h - 2; i ++){
-            mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
-          }
-
-          wrefresh(chat_WIN);
         }
 
-        else if (strncmp(msg,"__LEAVE__:",10) == 0) {
-          char temp[33];
-          int k = 0;
-
-          while (k < 32 && msg[10 + k] != '\0' && msg[10 + k] != '\n') {
-            temp[k] = msg[10 + k];
-            k++;
+        if(exists == 0){
+          if(num_users < 50){
+            strcpy(user_LIST[num_users], temp);
+            num_users++;
           }
-          temp[k] = '\0';
+        }
 
-          for(int i = 0; i < num_users; i++){
-            if(strcmp(user_LIST[i], temp) == 0){
-              for(int j = i; j < num_users - 1; j++){
-                strcpy(user_LIST[j], user_LIST[j + 1]);
-              }
-              num_users--;
-              i--;
+        if(num_messages < MAX_MSGS){
+          strcpy(messages[num_messages], msg);
+          num_messages++;
+        }
+
+        werase(users_WIN);
+        box(users_WIN,0,0);
+        mvwprintw(users_WIN,0,2,"User List ");
+
+        for(int i =0;i < num_users && i < top_h -2; i ++){
+          mvwprintw(users_WIN,1 + i,1,"%s",user_LIST[i]);
+        }
+
+        wrefresh(users_WIN);
+
+        werase(chat_WIN);
+        box(chat_WIN,0,0);
+        mvwprintw(chat_WIN,0,2,"Chat ");
+        idlok(chat_WIN,TRUE);
+        scrollok(chat_WIN,TRUE);
+        // loop through all the messages, update ncurses
+
+        for(int i = 0; i < num_messages && i < top_h - 2; i ++){
+          mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
+        }
+        wrefresh(chat_WIN);
+      }
+
+      else if (strncmp(msg,"__LEAVE__:",10) == 0) {
+        char temp[33];
+        int k = 0;
+
+        while (k < 32 && msg[10 + k] != '\0' && msg[10 + k] != '\n') {
+          temp[k] = msg[10 + k];
+          k++;
+        }
+        temp[k] = '\0';
+
+        for(int i = 0; i < num_users; i++){
+          if(strcmp(user_LIST[i], temp) == 0){
+            for(int j = i; j < num_users - 1; j++){
+              strcpy(user_LIST[j], user_LIST[j + 1]);
             }
+            num_users--;
+            i--;
           }
-
-          if(num_messages < MAX_MSGS){
-            strcpy(messages[num_messages], msg);
-            num_messages++;
-          }
-
-          werase(users_WIN);
-          box(users_WIN,0,0);
-          mvwprintw(users_WIN,0,2,"User List ");
-
-          for(int i =0;i < num_users && i < top_h -2; i ++){
-            mvwprintw(users_WIN,1 + i,1,"%s",user_LIST[i]);
-          }
-
-          wrefresh(users_WIN);
-
-          werase(chat_WIN);
-          box(chat_WIN,0,0);
-          mvwprintw(chat_WIN,0,2,"Chat ");
-
-          for(int i = 0; i < num_messages && i < top_h - 2; i ++){
-            mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
-          }
-
-          wrefresh(chat_WIN);
         }
 
-        else {
-          if(num_messages < MAX_MSGS){
-            strcpy(messages[num_messages], msg);
-            num_messages++;
-          }
-
-          werase(chat_WIN);
-          box(chat_WIN,0,0);
-          mvwprintw(chat_WIN,0,2,"Chat ");
-
-          for(int i = 0; i < num_messages && i < top_h - 2; i ++){
-            mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
-          }
-          wrefresh(chat_WIN);
+        if(num_messages < MAX_MSGS){
+          strcpy(messages[num_messages], msg);
+          num_messages++;
         }
+
+        werase(users_WIN);
+        box(users_WIN,0,0);
+        mvwprintw(users_WIN,0,2,"User List ");
+
+        for(int i =0;i < num_users && i < top_h -2; i ++){
+          mvwprintw(users_WIN,1 + i,1,"%s",user_LIST[i]);
+        }
+
+        wrefresh(users_WIN);
+
+        werase(chat_WIN);
+        box(chat_WIN,0,0);
+        mvwprintw(chat_WIN,0,2,"Chat ");
+        idlok(chat_WIN,TRUE);
+        scrollok(chat_WIN,TRUE);
+        // loop through all the messages, update ncurses
+
+        for(int i = 0; i < num_messages && i < top_h - 2; i ++){
+          mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
+        }
+        wrefresh(chat_WIN);
+      }
+
+      else {
+        if(num_messages < MAX_MSGS){
+          strcpy(messages[num_messages], msg);
+          num_messages++;
+        }
+
+        werase(chat_WIN);
+        box(chat_WIN,0,0);
+        mvwprintw(chat_WIN,0,2,"Chat ");
+        idlok(chat_WIN,TRUE);
+        scrollok(chat_WIN,TRUE);
+        // loop through all the messages, update ncurses
+
+        for(int i = 0; i < num_messages && i < top_h - 2; i ++){
+          mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
+        }
+        wrefresh(chat_WIN);
       }
     }
-
 
 
     if (FD_ISSET(STDIN_FILENO, &read_fds)) {
@@ -244,8 +272,9 @@ int main(int argc, char * argv[]) {
         }
       }
 
-      else if(key == '\n'){
+      if(key == '\n'){
         if(input_LEN > 0){
+
             char new_msg[MAX_MSG_SIZE];
 
 
@@ -267,7 +296,7 @@ int main(int argc, char * argv[]) {
         }
       }
 
-      else if(key >= 32 && key <= 126){//if its a n actual letter add to end
+      if(key >= 32 && key <= 126){//if its a n actual letter add to end
         if(input_LEN < 1024){
             input[input_LEN] = (char)key;
             input_LEN ++;
@@ -275,11 +304,11 @@ int main(int argc, char * argv[]) {
         }
       }
 
-      werase(input_WIN);
-      box(input_WIN,0,0);
-      mvwprintw(input_WIN,0,2,"Input ");
-      mvwprintw(input_WIN,1,1,"| %s",input);
-      wrefresh(input_WIN);
+      if (key == KEY_LEFT && input_LEN > 0) {
+        int cur_x; int cur_y;
+        getyx(stdscr, cur_y, cur_x);
+        move(cur_y, cur_x-1);
+      }
 
       werase(users_WIN);
       box(users_WIN,0,0);
@@ -291,6 +320,25 @@ int main(int argc, char * argv[]) {
 
       wrefresh(users_WIN);
 
+
+      werase(chat_WIN);
+      box(chat_WIN,0,0);
+      mvwprintw(chat_WIN,0,2,"Chat ");
+      idlok(chat_WIN,TRUE);
+      scrollok(chat_WIN,TRUE);
+      // loop through all the messages, update ncurses
+
+      for(int i = 0; i < num_messages && i < top_h - 2; i ++){
+        mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
+      }
+      wrefresh(chat_WIN);
+
+      werase(input_WIN);
+      box(input_WIN,0,0);
+      mvwprintw(input_WIN,0,2,"Input ");
+      mvwprintw(input_WIN,1,1,"| %s",input);
+      wrefresh(input_WIN);
+
     }
 
   }
@@ -298,4 +346,7 @@ int main(int argc, char * argv[]) {
   close(server_socket);
   endwin();
   return 0;
+
+
+
 }

@@ -4,13 +4,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/select.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <string.h>
 
-static int listen_socket;
-static int client_fds[10];
-static int num_clients;
+
+int listen_socket;
+int num_clients = 0;
+int client_fds[10];
+
 
 static void sighandler(int signo) {
   if (signo == SIGINT) {
@@ -18,18 +17,18 @@ static void sighandler(int signo) {
     for (int i = 0; i < num_clients; i++) {
       close(client_fds[i]);
     }
-    exit(0);
+    exit(0);  
   }
 }
 
 
-
 int main() {
+    signal(SIGINT, sighandler);
+
     listen_socket = server_setup();
 
 
     fd_set read_fds;
-    num_clients = 0;
     int max_fd = listen_socket;
 
     char user_LIST[10][33];
@@ -40,7 +39,7 @@ int main() {
       user_LIST[i][0] = '\0';
     }
 
-    signal(SIGINT, sighandler);
+    int first = 1;
 
     while(1) {
       FD_ZERO(&read_fds);
@@ -66,16 +65,20 @@ int main() {
         num_clients++;
       }
 
-      for (int i = 0; i < num_clients; i++) { // one issue with this is that earlier clients will have read priority
-        // probably causes the issue of the later clients not having their messages displayed until the first client sends a message
+      for (int i = 0; i < num_clients; i++) {
+        
         if (FD_ISSET(client_fds[i], &read_fds)) {
+          if (first) {
+            first = !first;
+            continue;
+          }
 
           // printf("SERVER READ\n");
 
           char msg[MAX_MSG_SIZE];
           int client_socket = client_fds[i];
 
-          int bytes = read(client_socket, msg, sizeof(msg) - 1);
+          int bytes = read(client_socket, msg, sizeof(msg));
 
 
 
