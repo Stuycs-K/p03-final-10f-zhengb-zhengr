@@ -65,8 +65,8 @@ int main() {
         num_clients++;
       }
 
-      for (int i = 0; i < num_clients; i++) { // one issue with this is that earlier clients will have read priority
-        // probably causes the issue of the later clients not having their messages displayed until the first client sends a message
+      for (int i = 0; i < num_clients; i++) {
+        
         if (FD_ISSET(client_fds[i], &read_fds)) {
           if (first) {
             first = !first;

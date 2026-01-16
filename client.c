@@ -91,13 +91,16 @@ int main(int argc, char * argv[]) {
     user_LIST[i][0] = '\0';
   }
 
-  strcpy(user_LIST[0],username);
+  strcpy(user_LIST[0], username);
   num_users += 1;
 
 
   werase(users_WIN);
   box(users_WIN,0,0);
   mvwprintw(users_WIN,0,2,"Users ");
+  for(int i =0;i < num_users && i < top_h -2; i ++){
+    mvwprintw(users_WIN,1 + i,1,"%s",user_LIST[i]);
+  }
   wrefresh(users_WIN);
 
   werase(chat_WIN);
@@ -273,12 +276,6 @@ int main(int argc, char * argv[]) {
         move(cur_y, cur_x-1);
       }
 
-      werase(input_WIN);
-      box(input_WIN,0,0);
-      mvwprintw(input_WIN,0,2,"Input ");
-      mvwprintw(input_WIN,1,1,"| %s",input);
-      wrefresh(input_WIN);
-
       werase(users_WIN);
       box(users_WIN,0,0);
       mvwprintw(users_WIN,0,2,"User List ");
@@ -288,6 +285,25 @@ int main(int argc, char * argv[]) {
       }
 
       wrefresh(users_WIN);
+
+
+      werase(chat_WIN);
+      box(chat_WIN,0,0);
+      mvwprintw(chat_WIN,0,2,"Chat ");
+      idlok(chat_WIN,TRUE);
+      scrollok(chat_WIN,TRUE);
+      // loop through all the messages, update ncurses
+
+      for(int i = 0; i < num_messages && i < top_h - 2; i ++){
+        mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
+      }
+      wrefresh(chat_WIN);
+
+      werase(input_WIN);
+      box(input_WIN,0,0);
+      mvwprintw(input_WIN,0,2,"Input ");
+      mvwprintw(input_WIN,1,1,"| %s",input);
+      wrefresh(input_WIN);
 
     }
 
