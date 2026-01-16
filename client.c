@@ -164,6 +164,11 @@ int main(int argc, char * argv[]) {
           }
         }
 
+        if(num_messages < MAX_MSGS){
+          strcpy(messages[num_messages], msg);
+          num_messages++;
+        }
+
         werase(users_WIN);
         box(users_WIN,0,0);
         mvwprintw(users_WIN,0,2,"User List ");
@@ -173,6 +178,18 @@ int main(int argc, char * argv[]) {
         }
 
         wrefresh(users_WIN);
+
+        werase(chat_WIN);
+        box(chat_WIN,0,0);
+        mvwprintw(chat_WIN,0,2,"Chat ");
+        idlok(chat_WIN,TRUE);
+        scrollok(chat_WIN,TRUE);
+        // loop through all the messages, update ncurses
+
+        for(int i = 0; i < num_messages && i < top_h - 2; i ++){
+          mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
+        }
+        wrefresh(chat_WIN);
       }
 
       else if (strncmp(msg,"__LEAVE__:",10) == 0) {
@@ -195,6 +212,11 @@ int main(int argc, char * argv[]) {
           }
         }
 
+        if(num_messages < MAX_MSGS){
+          strcpy(messages[num_messages], msg);
+          num_messages++;
+        }
+
         werase(users_WIN);
         box(users_WIN,0,0);
         mvwprintw(users_WIN,0,2,"User List ");
@@ -204,6 +226,18 @@ int main(int argc, char * argv[]) {
         }
 
         wrefresh(users_WIN);
+
+        werase(chat_WIN);
+        box(chat_WIN,0,0);
+        mvwprintw(chat_WIN,0,2,"Chat ");
+        idlok(chat_WIN,TRUE);
+        scrollok(chat_WIN,TRUE);
+        // loop through all the messages, update ncurses
+
+        for(int i = 0; i < num_messages && i < top_h - 2; i ++){
+          mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
+        }
+        wrefresh(chat_WIN);
       }
 
       else {
