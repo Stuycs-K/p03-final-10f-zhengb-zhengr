@@ -65,8 +65,18 @@ int main(int argc, char * argv[]) {
 
   WINDOW * input_WIN = newwin(input_h,screen_w,top_h,0);
 
+<<<<<<< HEAD
   char user_LIST[50][33];
   int num_users = 0;
+=======
+      idlok(chat_WIN,TRUE);
+      scrollok(chat_WIN,TRUE);
+      setscrreg(0,top_h);
+
+
+      char user_LIST[50][33];
+      int num_users = 0;
+>>>>>>> 5666c4c51ae61018999bb3f7354191fb5476f210
 
   char input[1025];
   int input_LEN = 0;
@@ -121,9 +131,92 @@ int main(int argc, char * argv[]) {
           char temp[33];
           int k = 0;
 
+<<<<<<< HEAD
           while (k < 32 && msg[9 + k] != '\0' && msg[9 + k] != '\n') {
             temp[k] = msg[9 + k];
             k++;
+=======
+              while (k < 32 && msg[9 + k] != '\0' && msg[9 + k] != '\n') {
+                temp[k] = msg[9 + k];
+                k++;
+              }
+              temp[k] = '\0';
+
+              int exists = 0;
+              for(int i = 0; i < num_users; i++){
+                if(strcmp(user_LIST[i], temp) == 0){
+                  exists = 1;
+                }
+              }
+
+              if(exists == 0){
+                if(num_users < 50){
+                  strcpy(user_LIST[num_users], temp);
+                  num_users++;
+                }
+              }
+
+              werase(users_WIN);
+              box(users_WIN,0,0);
+              mvwprintw(users_WIN,0,2,"User List ");
+
+              for(int i =0;i < num_users && i < top_h -2; i ++){
+                mvwprintw(users_WIN,1 + i,1,"%s",user_LIST[i]);
+              }
+
+              wrefresh(users_WIN);
+            }
+
+            else if (strncmp(msg,"__LEAVE__:",10) == 0) {
+              char temp[33];
+              int k = 0;
+
+              while (k < 32 && msg[10 + k] != '\0' && msg[10 + k] != '\n') {
+                temp[k] = msg[10 + k];
+                k++;
+              }
+              temp[k] = '\0';
+
+              for(int i = 0; i < num_users; i++){
+                if(strcmp(user_LIST[i], temp) == 0){
+                  for(int j = i; j < num_users - 1; j++){
+                    strcpy(user_LIST[j], user_LIST[j + 1]);
+                  }
+                  num_users--;
+                  i--;
+                }
+              }
+
+              werase(users_WIN);
+              box(users_WIN,0,0);
+              mvwprintw(users_WIN,0,2,"User List ");
+
+              for(int i =0;i < num_users && i < top_h -2; i ++){
+                mvwprintw(users_WIN,1 + i,1,"%s",user_LIST[i]);
+              }
+
+              wrefresh(users_WIN);
+            }
+
+            else {
+              if(num_messages < MAX_MSGS){
+                strcpy(messages[num_messages], msg);
+                num_messages++;
+              }
+
+              werase(chat_WIN);
+              box(chat_WIN,0,0);
+              mvwprintw(chat_WIN,0,2,"Chat ");
+              idlok(chat_WIN,TRUE);
+              scrollok(chat_WIN,TRUE);
+              // loop through all the messages, update ncurses
+
+              for(int i = 0; i < num_messages && i < top_h - 2; i ++){
+                mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
+              }
+              wrefresh(chat_WIN);
+            }
+>>>>>>> 5666c4c51ae61018999bb3f7354191fb5476f210
           }
           temp[k] = '\0';
 
