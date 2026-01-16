@@ -1,256 +1,150 @@
-    #include <sys/select.h>
-    #include <time.h>
-    #include <ncurses.h>
-    #include <unistd.h>
-    #include <string.h>
-    #include <stdio.h>
-    #include "networking.h"
+#include <sys/select.h>
+#include <time.h>
+#include <ncurses.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include "networking.h"
 
 
 
-    int main(int argc, char * argv[]) {
-      char * IP = "127.0.0.1";
+int main(int argc, char * argv[]) {
+  char * IP = "127.0.0.1";
 
-      if (argc == 2) {
-        IP = argv[1];
-      }
-
-
-      initscr();
-      cbreak();
-      noecho();
-      keypad(stdscr,TRUE);//this is for keys liie the up arrow and down arror
+  if (argc == 2) {
+    IP = argv[1];
+  }
 
 
-      char messages[MAX_MSGS][MAX_MSG_SIZE];
-      int num_messages = 0;
-      char username[33];
+  initscr();
+  cbreak();
+  noecho();
+  keypad(stdscr,TRUE);//this is for keys liie the up arrow and down arror
 
 
-      mvprintw(0,0,"Enter your Username: ");
-      echo();
-      getnstr(username, sizeof(username) - 1);//so they have ttheir actual username
-      noecho();
-
-      if(username[0] == '\0'){
-        strcpy(username,"Guest");
-      }
-
-      clear();
+  char messages[MAX_MSGS][MAX_MSG_SIZE];
+  int num_messages = 0;
+  char username[33];
 
 
-      int server_socket = client_tcp_handshake(IP);
+  mvprintw(0,0,"Enter your Username: ");
+  echo();
+  getnstr(username, sizeof(username) - 1);//so they have ttheir actual username
+  noecho();
 
-      {
-        char join_msg[MAX_MSG_SIZE];
-        snprintf(join_msg, sizeof(join_msg), "__JOIN__:%s\n", username);
-        write(server_socket, join_msg, strlen(join_msg));
-      }
+  if(username[0] == '\0'){
+    strcpy(username,"Guest");
+  }
 
-      int screen_h;
-      int screen_w;
-
-      getmaxyx(stdscr,screen_h,screen_w);
-
-      int input_h = 3;
-      int top_h = screen_h - input_h;//rest of the space goes to chat + userlist
+  clear();
 
 
-      int users_w = 20;
-      int chat_w = screen_w - users_w;//rest of this space goes to chat
+  int server_socket = client_tcp_handshake(IP);
 
-      WINDOW * users_WIN = newwin(top_h,users_w,0,0);
+  {
+    char join_msg[MAX_MSG_SIZE];
+    snprintf(join_msg, sizeof(join_msg), "__JOIN__:%s\n", username);
+    write(server_socket, join_msg, strlen(join_msg));
+  }
 
-      WINDOW * chat_WIN = newwin(top_h,chat_w,0,users_w);
+  int screen_h;
+  int screen_w;
 
-      WINDOW * input_WIN = newwin(input_h,screen_w,top_h,0);
+  getmaxyx(stdscr,screen_h,screen_w);
 
-      char user_LIST[50][33];
-      int num_users = 0;
-
-      char input[1025];
-      int input_LEN = 0;
-
-      input[0] = '\0';
-
-      for(int i = 0;i < 50; i ++){
-        user_LIST[i][0] = '\0';
-      }
-
-      strcpy(user_LIST[0],username);
-      num_users += 1;
+  int input_h = 3;
+  int top_h = screen_h - input_h;//rest of the space goes to chat + userlist
 
 
-      werase(users_WIN);
-      box(users_WIN,0,0);
-      mvwprintw(users_WIN,0,2,"Users ");
-      wrefresh(users_WIN);
+  int users_w = 20;
+  int chat_w = screen_w - users_w;//rest of this space goes to chat
 
-      werase(chat_WIN);
-      box(chat_WIN,0,0);
-      mvwprintw(chat_WIN,0,2,"Chat ");
-      wrefresh(chat_WIN);
+  WINDOW * users_WIN = newwin(top_h,users_w,0,0);
 
-      werase(input_WIN);
-      box(input_WIN,0,0);
-      mvwprintw(input_WIN,0,2,"Input ");
-      wrefresh(input_WIN);
+  WINDOW * chat_WIN = newwin(top_h,chat_w,0,users_w);
 
+  WINDOW * input_WIN = newwin(input_h,screen_w,top_h,0);
 
+  char user_LIST[50][33];
+  int num_users = 0;
 
-      while (1) {
-        fd_set read_fds;
-        FD_ZERO(&read_fds);
+  char input[1025];
+  int input_LEN = 0;
 
-        FD_SET(STDIN_FILENO, &read_fds);
-        FD_SET(server_socket, &read_fds);
+  input[0] = '\0';
 
-        select(server_socket + 1, &read_fds, NULL, NULL, NULL);
+  for(int i = 0;i < 50; i ++){
+    user_LIST[i][0] = '\0';
+  }
+
+  strcpy(user_LIST[0],username);
+  num_users += 1;
 
 
-        if (FD_ISSET(server_socket, &read_fds)) {
-          char msg[MAX_MSG_SIZE];
+  werase(users_WIN);
+  box(users_WIN,0,0);
+  mvwprintw(users_WIN,0,2,"Users ");
+  wrefresh(users_WIN);
 
-          int bytes = read(server_socket, msg, sizeof(msg) - 1);
-          err(bytes, "read message from server");
+  werase(chat_WIN);
+  box(chat_WIN,0,0);
+  mvwprintw(chat_WIN,0,2,"Chat ");
+  wrefresh(chat_WIN);
 
-          if(bytes > 0){
-            msg[bytes] = '\0';
+  werase(input_WIN);
+  box(input_WIN,0,0);
+  mvwprintw(input_WIN,0,2,"Input ");
+  wrefresh(input_WIN);
 
-            if (strncmp(msg,"__JOIN__:",9) == 0) {
-              char temp[33];
-              int k = 0;
 
-              while (k < 32 && msg[9 + k] != '\0' && msg[9 + k] != '\n') {
-                temp[k] = msg[9 + k];
-                k++;
-              }
-              temp[k] = '\0';
 
-              int exists = 0;
-              for(int i = 0; i < num_users; i++){
-                if(strcmp(user_LIST[i], temp) == 0){
-                  exists = 1;
-                }
-              }
+  while (1) {
+    fd_set read_fds;
+    FD_ZERO(&read_fds);
 
-              if(exists == 0){
-                if(num_users < 50){
-                  strcpy(user_LIST[num_users], temp);
-                  num_users++;
-                }
-              }
+    FD_SET(STDIN_FILENO, &read_fds);
+    FD_SET(server_socket, &read_fds);
 
-              werase(users_WIN);
-              box(users_WIN,0,0);
-              mvwprintw(users_WIN,0,2,"User List ");
+    select(server_socket + 1, &read_fds, NULL, NULL, NULL);
 
-              for(int i =0;i < num_users && i < top_h -2; i ++){
-                mvwprintw(users_WIN,1 + i,1,"%s",user_LIST[i]);
-              }
 
-              wrefresh(users_WIN);
-            }
+    if (FD_ISSET(server_socket, &read_fds)) {
+      char msg[MAX_MSG_SIZE];
 
-            else if (strncmp(msg,"__LEAVE__:",10) == 0) {
-              char temp[33];
-              int k = 0;
+      int bytes = read(server_socket, msg, sizeof(msg) - 1);
+      err(bytes, "read message from server");
 
-              while (k < 32 && msg[10 + k] != '\0' && msg[10 + k] != '\n') {
-                temp[k] = msg[10 + k];
-                k++;
-              }
-              temp[k] = '\0';
+      if(bytes > 0){
+        msg[bytes] = '\0';
 
-              for(int i = 0; i < num_users; i++){
-                if(strcmp(user_LIST[i], temp) == 0){
-                  for(int j = i; j < num_users - 1; j++){
-                    strcpy(user_LIST[j], user_LIST[j + 1]);
-                  }
-                  num_users--;
-                  i--;
-                }
-              }
+        if (strncmp(msg,"__JOIN__:",9) == 0) {
+          char temp[33];
+          int k = 0;
 
-              werase(users_WIN);
-              box(users_WIN,0,0);
-              mvwprintw(users_WIN,0,2,"User List ");
-
-              for(int i =0;i < num_users && i < top_h -2; i ++){
-                mvwprintw(users_WIN,1 + i,1,"%s",user_LIST[i]);
-              }
-
-              wrefresh(users_WIN);
-            }
-
-            else {
-              if(num_messages < MAX_MSGS){
-                strcpy(messages[num_messages], msg);
-                num_messages++;
-              }
-
-              werase(chat_WIN);
-              box(chat_WIN,0,0);
-              mvwprintw(chat_WIN,0,2,"Chat ");
-              // loop through all the messages, update ncurses
-
-              for(int i = 0; i < num_messages && i < top_h - 2; i ++){
-                mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
-              }
-              wrefresh(chat_WIN);
-            }
+          while (k < 32 && msg[9 + k] != '\0' && msg[9 + k] != '\n') {
+            temp[k] = msg[9 + k];
+            k++;
           }
-        }
+          temp[k] = '\0';
 
-
-
-        if (FD_ISSET(STDIN_FILENO, &read_fds)) {
-
-          int key = getch();
-
-          if(key == KEY_BACKSPACE || key == 127){
-            if(input_LEN > 0){
-                input_LEN--;
-                input[input_LEN] = '\0';
+          int exists = 0;
+          for(int i = 0; i < num_users; i++){
+            if(strcmp(user_LIST[i], temp) == 0){
+              exists = 1;
             }
           }
 
-          else if(key == '\n'){
-            if(input_LEN > 0){
-                char new_msg[MAX_MSG_SIZE];
-
-
-                time_t raw_time;
-                time(&raw_time);
-
-                struct tm * local_time = localtime(&raw_time);
-
-                char time[8];
-                strftime(time, sizeof(time), "%I:%M%p", local_time);
-
-                snprintf(new_msg, sizeof(new_msg), "%s: %s (%s)\n", username, input, time);
-
-                int bytes = write(server_socket, new_msg, strlen(new_msg));
-                err(bytes, "write message to server");
-
-                input_LEN = 0;
-                input[0] = '\0';
+          if(exists == 0){
+            if(num_users < 50){
+              strcpy(user_LIST[num_users], temp);
+              num_users++;
             }
           }
 
-          else if(key >= 32 && key <= 126){//if its a n actual letter add to end
-            if(input_LEN < 1024){
-                input[input_LEN] = (char)key;
-                input_LEN ++;
-                input[input_LEN] = '\0';
-            }
+          if(num_messages < MAX_MSGS){
+            strcpy(messages[num_messages], msg);
+            num_messages++;
           }
-
-          werase(input_WIN);
-          box(input_WIN,0,0);
-          mvwprintw(input_WIN,0,2,"Input ");
-          mvwprintw(input_WIN,1,1,"| %s",input);
-          wrefresh(input_WIN);
 
           werase(users_WIN);
           box(users_WIN,0,0);
@@ -262,14 +156,146 @@
 
           wrefresh(users_WIN);
 
+          werase(chat_WIN);
+          box(chat_WIN,0,0);
+          mvwprintw(chat_WIN,0,2,"Chat ");
+
+          for(int i = 0; i < num_messages && i < top_h - 2; i ++){
+            mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
+          }
+
+          wrefresh(chat_WIN);
         }
 
+        else if (strncmp(msg,"__LEAVE__:",10) == 0) {
+          char temp[33];
+          int k = 0;
+
+          while (k < 32 && msg[10 + k] != '\0' && msg[10 + k] != '\n') {
+            temp[k] = msg[10 + k];
+            k++;
+          }
+          temp[k] = '\0';
+
+          for(int i = 0; i < num_users; i++){
+            if(strcmp(user_LIST[i], temp) == 0){
+              for(int j = i; j < num_users - 1; j++){
+                strcpy(user_LIST[j], user_LIST[j + 1]);
+              }
+              num_users--;
+              i--;
+            }
+          }
+
+          if(num_messages < MAX_MSGS){
+            strcpy(messages[num_messages], msg);
+            num_messages++;
+          }
+
+          werase(users_WIN);
+          box(users_WIN,0,0);
+          mvwprintw(users_WIN,0,2,"User List ");
+
+          for(int i =0;i < num_users && i < top_h -2; i ++){
+            mvwprintw(users_WIN,1 + i,1,"%s",user_LIST[i]);
+          }
+
+          wrefresh(users_WIN);
+
+          werase(chat_WIN);
+          box(chat_WIN,0,0);
+          mvwprintw(chat_WIN,0,2,"Chat ");
+
+          for(int i = 0; i < num_messages && i < top_h - 2; i ++){
+            mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
+          }
+
+          wrefresh(chat_WIN);
+        }
+
+        else {
+          if(num_messages < MAX_MSGS){
+            strcpy(messages[num_messages], msg);
+            num_messages++;
+          }
+
+          werase(chat_WIN);
+          box(chat_WIN,0,0);
+          mvwprintw(chat_WIN,0,2,"Chat ");
+
+          for(int i = 0; i < num_messages && i < top_h - 2; i ++){
+            mvwprintw(chat_WIN,i + 1, 1,"%s",messages[i]);
+          }
+          wrefresh(chat_WIN);
+        }
+      }
+    }
+
+
+
+    if (FD_ISSET(STDIN_FILENO, &read_fds)) {
+
+      int key = getch();
+
+      if(key == KEY_BACKSPACE || key == 127){
+        if(input_LEN > 0){
+            input_LEN--;
+            input[input_LEN] = '\0';
+        }
       }
 
-      close(server_socket);
-      endwin();
-      return 0;
+      else if(key == '\n'){
+        if(input_LEN > 0){
+            char new_msg[MAX_MSG_SIZE];
 
 
+            time_t raw_time;
+            time(&raw_time);
+
+            struct tm * local_time = localtime(&raw_time);
+
+            char time[8];
+            strftime(time, sizeof(time), "%I:%M%p", local_time);
+
+            snprintf(new_msg, sizeof(new_msg), "%s: %s (%s)\n", username, input, time);
+
+            int bytes = write(server_socket, new_msg, strlen(new_msg));
+            err(bytes, "write message to server");
+
+            input_LEN = 0;
+            input[0] = '\0';
+        }
+      }
+
+      else if(key >= 32 && key <= 126){//if its a n actual letter add to end
+        if(input_LEN < 1024){
+            input[input_LEN] = (char)key;
+            input_LEN ++;
+            input[input_LEN] = '\0';
+        }
+      }
+
+      werase(input_WIN);
+      box(input_WIN,0,0);
+      mvwprintw(input_WIN,0,2,"Input ");
+      mvwprintw(input_WIN,1,1,"| %s",input);
+      wrefresh(input_WIN);
+
+      werase(users_WIN);
+      box(users_WIN,0,0);
+      mvwprintw(users_WIN,0,2,"User List ");
+
+      for(int i =0;i < num_users && i < top_h -2; i ++){
+        mvwprintw(users_WIN,1 + i,1,"%s",user_LIST[i]);
+      }
+
+      wrefresh(users_WIN);
 
     }
+
+  }
+
+  close(server_socket);
+  endwin();
+  return 0;
+}
